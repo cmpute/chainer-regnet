@@ -1,0 +1,6 @@
+# show projected
+import matplotlib.pyplot as plt
+plt.figure()
+plt.scatter(proj[0,:], proj[1,:])
+plt.imshow(image.transpose(1,2,0).astype(int))
+plt.show()

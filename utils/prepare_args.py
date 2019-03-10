@@ -25,13 +25,22 @@ def create_args(phase='train'):
             'net_weight_path', type=str,
             help='The path to net model (in HDF5 format)')
         group.add_argument(
-            'input_path', type=str,
+            '--input_pointcloud', type=str,
             help='The path to input point cloud')
+        group.add_argument(
+            '--input_image', type=str,
+            help='The path to input image file')
+        group.add_argument(
+            '--input_calibration', type=str,
+            help='The path to input calibration file')
     
     group = parser.add_argument_group('Model parameters')
     group.add_argument(
         '--model_name', type=str, default='RegNet',
         help='The model type name')
+    group.add_argument(
+        '--epsilon', type=float, default=1,
+        help='The weight of location loss')
     group.add_argument(
         '--gpus', type=str, default='0',
         help='GPU Ids to be used')
@@ -53,7 +62,7 @@ def create_args(phase='train'):
              'this iteration')
     group.add_argument(
         '--valid_freq', type=int, default=1,
-        help='Perform test every this iteration (0 means no test)')
+        help='Perform test every this epoch (0 means no test)')
     group.add_argument(
         '--valid_batchsize', type=int, default=1,
         help='The mini-batch size during validation loop')
@@ -117,3 +126,12 @@ def get_optimizer(model, opt, lr, adam_alpha, adam_beta1,
             chainer.optimizer.WeightDecay(weight_decay))
 
     return optimizer
+
+def get_gpu_dict(gpu_string):
+    devices = {}
+    for gid in [int(i) for i in gpu_string]:
+        if 'main' not in devices:
+            devices['main'] = gid
+        else:
+            devices['gpu{}'.format(gid)] = gid
+    return devices

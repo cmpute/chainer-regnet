@@ -1,5 +1,7 @@
 import numpy as np
+import chainer
 from chainercv.utils import read_image
+chainer.global_config.cv_read_image_backend = "PIL"
 
 def load_kitti_points(path, intensity=True):
     points = np.fromfile(path, dtype=np.float32).reshape(-1, 4)

@@ -48,8 +48,11 @@ def create_args(phase='train'):
         )
     elif phase == 'test':
         group.add_argument(
-            '-w', 'net_weight_path', type=str,
+            'net_weight_path', type=str,
             help='The path to net model (in HDF5 format)')
+        group.add_argument(
+            '--iter', type=int, default=1,
+            help='How many times do recalibrate')
         group.add_argument(
             '--input_pointcloud', type=str,
             help='The path to input point cloud')

@@ -39,7 +39,14 @@ def load_kitti_calib(path):
     return data
     
 def load_kitti_image(path):
-    # image = Image.open(path)
-    # image.load()
-    # return np.asarray(image, dtype="i4")
     return read_image(path)
+
+def project_lidar_to_image(cloud, homo, intrinsic):
+    xyz1 = np.insert(cloud[:,:3], 3, values=1, axis=1)
+    proj = homo.dot(xyz1.T)
+    zloc = proj[2,:]
+    proj = intrinsic.dot(proj)
+    xloc = proj[0,:] / proj[2,:]
+    yloc = proj[1,:] / proj[2,:]
+
+    return np.asarray([xloc, yloc, zloc])

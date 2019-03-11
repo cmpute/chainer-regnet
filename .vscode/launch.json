@@ -20,13 +20,14 @@
             "name": "Test",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/infer.py",
+            "program": "${workspaceFolder}/test.py",
             "console": "integratedTerminal",
             "args": [
-                "--input_pointcloud", "F:/[Kitti]/Object/training/velodyne/000010.bin",
-                "--input_image", "F:/[Kitti]/Object/training/image_2/000010.png",
-                "--input_calibration", "F:/[Kitti]/Object/training/calib/000010.txt",
-                "D:/Calibration/regnet/results/RegNet_2019-03-10_23-15-27.h5"
+                "--input_pointcloud", "F:/[Kitti]/Object/testing/velodyne/000100.bin",
+                "--input_image", "F:/[Kitti]/Object/testing/image_2/000100.png",
+                "--input_calibration", "F:/[Kitti]/Object/testing/calib/000100.txt",
+                "--iter", "1",
+                "weights/epsilon=1_epoch=100.h5"
             ],
         },
     ]

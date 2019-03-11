@@ -25,9 +25,11 @@ def main():
     optimizer = get_optimizer(model, **vars(args))
     
     # Setting up datasets
-    prep = TransformDataset(KITTI(args.kitti_path, 'train'), CalibPrepare())
-    train, valid = split_dataset(prep, round(len(prep)*0.5))
-    print('train: {}, valid: {}'.format(len(train), len(valid)))
+    prep = TransformDataset(KITTI(args.kitti_path, 'train'), CalibPrepare(args.init_pose))
+    train, valid = split_dataset(prep, round(len(prep) * (1-args.valid_proportion)))
+    print("========== Model Parameters ==========")
+    print("location loss weight (epsilon):", args.epsilon)
+    print('train samples: {}, valid samples: {}'.format(len(train), len(valid)))
 
     # Iterator
     if DEBUG: Iterator = SerialIterator
@@ -36,7 +38,7 @@ def main():
     valid_iter = Iterator(valid, args.valid_batchsize, repeat=False, shuffle=False)
 
     # Updater
-    if DEBUG: Updater = StandardUpdater(train_iter, optimizer, device=0)
+    if DEBUG: Updater = StandardUpdater(train_iter, optimizer, device=devices['main'])
     else: Updater = ParallelUpdater(train_iter, optimizer, devices=devices)
     trainer = Trainer(Updater, (args.epoch, 'epoch'), out=result_dir)
 
@@ -49,18 +51,20 @@ def main():
         trigger=(args.show_log_iter, 'iteration'))
     trainer.extend(extensions.ProgressBar(update_interval=20))
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'iteration', 'main/loss', 'validation/main/loss']))
+        ['epoch', 'iteration', 'main/loss', 'validation/main/loss', 'elapsed_time']))
 
     # Resume from snapshot
     if args.resume_from:
         chainer.serializers.load_npz(args.resume_from, trainer)
 
     # Train and save
+    print("========== Training ==========")
     hook = CupyMemoryProfileHook()
     with hook: trainer.run()
 
     print("========== Saving ==========")
     chainer.serializers.save_hdf5(create_result_file(args.model_name), model)
+    print("Done.")
     print("========== Memory Profiling ==========")
     hook.print_report()
 

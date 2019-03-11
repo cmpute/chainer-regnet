@@ -12,8 +12,8 @@
             "console": "integratedTerminal",
             "args": [
                 "--kitti_path", "F:/[Kitti]/Object",
-                "--epoch", "20",
-                // "-r", "D:/Calibration/regnet/results/RegNet_2019-03-08_17-20-39/snapshot_iter_26000"
+                "--epoch", "60",
+                "-r", "results/RegNet_2019-03-10_12-13-39/snapshot_iter_51000"
             ],
         },
         {
@@ -23,10 +23,10 @@
             "program": "${workspaceFolder}/infer.py",
             "console": "integratedTerminal",
             "args": [
-                "--input_pointcloud", "F:/[Kitti]/Object/training/velodyne/000000.bin",
-                "--input_image", "F:/[Kitti]/Object/training/image_2/000000.png",
-                "--input_calibration", "F:/[Kitti]/Object/training/calib/000000.txt",
-                "D:/Calibration/regnet/results/RegNet_2019-03-09_17-30-17.h5"
+                "--input_pointcloud", "F:/[Kitti]/Object/training/velodyne/000010.bin",
+                "--input_image", "F:/[Kitti]/Object/training/image_2/000010.png",
+                "--input_calibration", "F:/[Kitti]/Object/training/calib/000010.txt",
+                "D:/Calibration/regnet/results/RegNet_2019-03-10_23-15-27.h5"
             ],
         },
     ]

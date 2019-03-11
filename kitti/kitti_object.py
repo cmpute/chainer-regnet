@@ -9,7 +9,7 @@ class Kitti3DObjectDetectionDataset(dataset_mixin.DatasetMixin):
     Should be used along with TransformDataset
     transform input: point_cloud (ndarray), labels (list of tuple), calibration (dict of ndarray)
     '''
-    def __init__(self, root_path, split='train', train_proportion=0.9, valid_proportion=0.1):
+    def __init__(self, root_path, split='train'):
         if split is 'test': mid = 'testing'
         elif split in 'train': mid = 'training'
         else: raise ValueError('Invalid dataset split')

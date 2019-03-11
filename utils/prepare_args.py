@@ -9,20 +9,46 @@ def create_args(phase='train'):
 
     group = parser.add_argument_group('Dataset settings')
     if phase == 'train':
+        group = parser.add_argument_group('Train settings')\
+                if phase == 'train' else argparse.ArgumentParser()
+        group.add_argument(
+            '-r', '--resume_from',
+            help='Resume the training from snapshot')
+        group.add_argument(
+            '--epoch', type=int, default=100,
+            help='When the trianing will finish')
+        group.add_argument(
+            '--batchsize', type=int, default=4,
+            help='minibatch size')
+        group.add_argument(
+            '--snapshot_iter', type=int, default=1000,
+            help='The current learnt parameters in the model is saved every'
+                'this iteration')
+        group.add_argument(
+            '--valid_freq', type=int, default=1,
+            help='Perform test every this epoch (0 means no test)')
+        group.add_argument(
+            '--valid_batchsize', type=int, default=1,
+            help='The mini-batch size during validation loop')
+        group.add_argument(
+            '--show_log_iter', type=int, default=10,
+            help='Show loss value per this iterations')
+        group.add_argument(
+            '--epsilon', type=float, default=1,
+            help='The weight of location loss')
+        group.add_argument(
+            '--gpus', type=str, default='0',
+            help='GPU Ids to be used')
         group.add_argument(
             '--kitti_path', type=str,
             help='The path to the root of KITTI (object) dataset')
-        group.add_argument(
-            '--train_proportion', type=float, default=0.9,
-            help='The proportion of train data in the whole dataset'
-        )
         group.add_argument(
             '--valid_proportion', type=float, default=0.1,
             help='The proportion of valid data in the whole dataset'
         )
     elif phase == 'test':
         group.add_argument(
-            'net_weight_path', type=str,
+            '-w', 'net_weight_path', type=str,
             help='The path to net model (in HDF5 format)')
         group.add_argument(
             '--input_pointcloud', type=str,
@@ -39,36 +65,8 @@ def create_args(phase='train'):
         '--model_name', type=str, default='RegNet',
         help='The model type name')
     group.add_argument(
-        '--epsilon', type=float, default=1,
-        help='The weight of location loss')
-    group.add_argument(
-        '--gpus', type=str, default='0',
-        help='GPU Ids to be used')
-
-    group = parser.add_argument_group('Train settings')\
-            if phase == 'train' else argparse.ArgumentParser()
-    group.add_argument(
-        '-r', '--resume_from',
-        help='Resume the training from snapshot')
-    group.add_argument(
-        '--epoch', type=int, default=100,
-        help='When the trianing will finish')
-    group.add_argument(
-        '--batchsize', type=int, default=4,
-        help='minibatch size')
-    group.add_argument(
-        '--snapshot_iter', type=int, default=1000,
-        help='The current learnt parameters in the model is saved every'
-             'this iteration')
-    group.add_argument(
-        '--valid_freq', type=int, default=1,
-        help='Perform test every this epoch (0 means no test)')
-    group.add_argument(
-        '--valid_batchsize', type=int, default=1,
-        help='The mini-batch size during validation loop')
-    group.add_argument(
-        '--show_log_iter', type=int, default=10,
-        help='Show loss value per this iterations')
+        '--init_pose', type=float, default=[1,-1,1,0,0,0], nargs='*',
+        help='Initial calibration quaternion')
 
     group = parser.add_argument_group('Optimization settings')\
             if phase == 'train' else argparse.ArgumentParser()

@@ -1,45 +1,29 @@
 import numpy as np
 import scipy.linalg as spl
-import pyquaternion as pq
+from scipy.spatial.transform import Rotation
 
+def h_mat2quat(h):
+    q = Rotation.from_dcm(h[:3,:3]).as_quat()
+    return np.concatenate((q[:3]/q[3], h[:3,3]))
+    
 def h_quat2mat(h):
-    Hmat = pq.Quaternion([1, h[0], h[1], h[2]]).transformation_matrix # rotation
-    Hmat[0, 3] = h[3] # translation
-    Hmat[1, 3] = h[4]
-    Hmat[2, 3] = h[5]
+    q = np.concatenate((h[:3], [1]))
+    Hmat = np.eye(4)
+    Hmat[:3,:3] = Rotation.from_quat(q).as_dcm() # rotation
+    Hmat[:3, 3] = h[3:] # translation
     return Hmat
 
-def trace_method(matrix):
-    """
-    from pyquaternion... the precision cannot be achieved to make R orthogonal
-    """
-    m = matrix.conj().transpose() # This method assumes row-vector and postmultiplication of that vector
-    if m[2, 2] < 0:
-        if m[0, 0] > m[1, 1]:
-            t = 1 + m[0, 0] - m[1, 1] - m[2, 2]
-            q = [m[1, 2]-m[2, 1],  t,  m[0, 1]+m[1, 0],  m[2, 0]+m[0, 2]]
-        else:
-            t = 1 - m[0, 0] + m[1, 1] - m[2, 2]
-            q = [m[2, 0]-m[0, 2],  m[0, 1]+m[1, 0],  t,  m[1, 2]+m[2, 1]]
-    else:
-        if m[0, 0] < -m[1, 1]:
-            t = 1 - m[0, 0] - m[1, 1] + m[2, 2]
-            q = [m[0, 1]-m[1, 0],  m[2, 0]+m[0, 2],  m[1, 2]+m[2, 1],  t]
-        else:
-            t = 1 + m[0, 0] + m[1, 1] + m[2, 2]
-            q = [t,  m[1, 2]-m[2, 1],  m[2, 0]-m[0, 2],  m[0, 1]-m[1, 0]]
-
-    q = np.array(q)
-    # q *= 0.5 / np.sqrt(t)
-    q /= q[0] # make w = 1
-    return q
-
 class CalibPrepare:
-    # FIXME: implement randomize option and init_pose specified by argument
-    def __init__(self, init_pose=None, randomize=True):
-        if init_pose is not None and init_pose.shape != (6,):
-            raise ValueError("The initial H vector should have exactly 6 elements")
+    def __init__(self, init_pose, rot_disturb=0.2, trans_disturb=0.2):
+        if init_pose is not None:
+            init_pose = np.asarray(init_pose)
+            if init_pose.shape != (6,):
+                raise ValueError("The initial H vector should have exactly 6 elements")
+        elif init_pose is None:
+            raise ValueError("Please specify initial pose")
         self.init_pose = init_pose
+        self._drot = rot_disturb
+        self._dtrans = trans_disturb
 
     def __call__(self, args):
         # Parse input
@@ -51,11 +35,10 @@ class CalibPrepare:
             do_train = False
         else: raise ValueError("Unrecognized input")
 
-        if self.init_pose is None:
-            h_rand = np.random.rand(6)
-            H_init = h_quat2mat(h_rand + [1,-1,1,0,0,0])
-        else:
-            H_init = h_quat2mat(self.init_pose)
+        q_rand = np.random.rand(6)
+        q_rand[:3] = (q_rand[:3] - 0.5) * self._drot
+        q_rand[3:] = (q_rand[3:] - 0.5) * self._dtrans
+        H_init = h_quat2mat(q_rand + self.init_pose)
 
         # Project point cloud to image
         xyz1 = np.insert(lidar[:,:3], 3, values=1, axis=1)
@@ -82,13 +65,7 @@ class CalibPrepare:
         if do_train:
             # Calculate decalibration coeffs
             H_gt = np.vstack((calib['Tr_velo_to_cam'].reshape(3,4), [0,0,0,1]))
-            H_decalib = np.linalg.solve(H_init, H_gt)
-            ########## FIXME: precision error ##########
-            # rot = pq.Quaternion(matrix=H_decalib[:3,:3])
-            # rot = [rot.x, rot.y, rot.z]
-            #####################################
-            rot = trace_method(H_decalib[:3,:3])
-            decalib = np.concatenate((rot[1:], H_decalib[:3,3])).astype('f4')
+            decalib = h_mat2quat(np.linalg.solve(H_init, H_gt)).astype('f4')
             return image, dimg, decalib
         else:
             return image, dimg
